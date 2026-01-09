@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WAXUM Admin Panel</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Chivo+Mono:wght@400;600&family=Dela+Gothic+One&display=swap" rel="stylesheet">
+    <style>
+        @font-face {
+            font-family: 'BoldPixels';
+            src: url('assets/BoldPixels.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #050301;
+            color: #ff8f00;
+            font-family: 'Chivo Mono', monospace;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .login-container {
+            max-width: 400px;
+            margin: 100px auto;
+            padding: 40px;
+            border: 2px solid #ff8f00;
+            background: rgba(5, 3, 1, 0.9);
+        }
+
+        .login-container h1 {
+            font-family: 'Dela Gothic One', sans-serif;
+            font-size: 32px;
+            color: #ff8f00;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            margin-bottom: 8px;
+            color: #ff8f00;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            background: #050301;
+            border: 1px solid #ff8f00;
+            color: #ff8f00;
+            font-family: 'Chivo Mono', monospace;
+            font-size: 14px;
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .btn {
+            background: #050301;
+            border: 2px solid #ff8f00;
+            color: #ff8f00;
+            font-family: 'Chivo Mono', monospace;
+            font-weight: 600;
+            font-size: 16px;
+            padding: 12px 24px;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            background: #ff8f00;
+            color: #050301;
+        }
+
+        .btn-danger {
+            border-color: #ff0000;
+            color: #ff0000;
+        }
+
+        .btn-danger:hover {
+            background: #ff0000;
+            color: #050301;
+        }
+
+        .admin-panel {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: none;
+        }
+
+        .admin-panel.active {
+            display: block;
+        }
+
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #ff8f00;
+        }
+
+        .admin-header h1 {
+            font-family: 'Dela Gothic One', sans-serif;
+            font-size: 48px;
+            color: #ff8f00;
+        }
+
+        .logout-btn {
+            background: #050301;
+            border: 2px solid #ff8f00;
+            color: #ff8f00;
+            font-family: 'Chivo Mono', monospace;
+            font-weight: 600;
+            font-size: 14px;
+            padding: 8px 16px;
+            cursor: pointer;
+        }
+
+        .logout-btn:hover {
+            background: #ff8f00;
+            color: #050301;
+        }
+
+        .section {
+            margin-bottom: 40px;
+            padding: 24px;
+            border: 2px solid #ff8f00;
+            background: rgba(255, 143, 0, 0.05);
+        }
+
+        .section h2 {
+            font-family: 'Chivo Mono', monospace;
+            font-weight: 600;
+            font-size: 24px;
+            color: #ff8f00;
+            margin-bottom: 20px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-row.full {
+            grid-template-columns: 1fr;
+        }
+
+        .status-controls {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .status-btn {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .leaderboard-item {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            padding: 12px;
+            border: 1px solid #ff8f00;
+            margin-bottom: 12px;
+            background: rgba(255, 143, 0, 0.05);
+        }
+
+        .leaderboard-item input {
+            flex: 1;
+        }
+
+        .leaderboard-item .rank {
+            width: 60px;
+            font-weight: 600;
+        }
+
+        .add-btn {
+            background: #050301;
+            border: 1px dashed #ff8f00;
+            color: #ff8f00;
+            padding: 12px;
+            cursor: pointer;
+            text-align: center;
+            margin-top: 12px;
+        }
+
+        .add-btn:hover {
+            background: rgba(255, 143, 0, 0.1);
+        }
+
+        .delete-btn {
+            background: #050301;
+            border: 1px solid #ff0000;
+            color: #ff0000;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .delete-btn:hover {
+            background: #ff0000;
+            color: #050301;
+        }
+
+        .success-message {
+            background: rgba(0, 255, 0, 0.2);
+            border: 1px solid #00ff00;
+            color: #00ff00;
+            padding: 12px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .status-controls {
+                flex-direction: column;
+            }
+
+            .status-btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div class="login-container" id="login-container">
+        <h1>ADMIN LOGIN</h1>
+        <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="password-input" placeholder="Enter admin password">
+        </div>
+        <button class="btn" onclick="login()">LOGIN</button>
+        <div id="login-error" style="color: #ff0000; margin-top: 12px; display: none;">Incorrect password</div>
+    </div>
+
+    <!-- Admin Panel -->
+    <div class="admin-panel" id="admin-panel">
+        <div class="admin-header">
+            <h1>ADMIN PANEL</h1>
+            <button class="logout-btn" onclick="logout()">LOGOUT</button>
+        </div>
+
+        <div class="success-message" id="success-message">Changes saved successfully!</div>
+
+        <!-- Status Control -->
+        <div class="section">
+            <h2>LEADERBOARD STATUS</h2>
+            <div class="form-group">
+                <label>Current Status</label>
+                <div class="status-controls">
+                    <button class="btn status-btn" onclick="setStatus('active')">ACTIVE</button>
+                    <button class="btn status-btn" onclick="setStatus('paused')">PAUSED</button>
+                    <button class="btn status-btn" onclick="setStatus('ended')">ENDED</button>
+                </div>
+            </div>
+            
+            <!-- Countdown Display -->
+            <div class="form-group" style="margin-top: 24px; padding: 20px; border: 1px solid #ff8f00; background: rgba(255, 143, 0, 0.05);">
+                <label style="margin-bottom: 12px;">COUNTDOWN TIMER</label>
+                <div style="display: flex; gap: 12px; margin-bottom: 16px;">
+                    <button class="btn status-btn" onclick="setAdminTimerType('monthly')" id="admin-timer-monthly-btn" style="flex: 1;">MONTHLY</button>
+                    <button class="btn status-btn" onclick="setAdminTimerType('daily')" id="admin-timer-daily-btn" style="flex: 1; opacity: 0.5;">DAILY</button>
+                </div>
+                <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
+                    <div style="text-align: center;">
+                        <div id="admin-days" style="font-family: 'Dela Gothic One', sans-serif; font-size: 32px; color: #ff8f00; width: 50px;">00</div>
+                        <div style="font-size: 12px; color: #ff8f00; opacity: 0.8;">DAYS</div>
+                    </div>
+                    <div style="color: #ff8f00; font-size: 24px;">:</div>
+                    <div style="text-align: center;">
+                        <div id="admin-hours" style="font-family: 'Dela Gothic One', sans-serif; font-size: 32px; color: #ff8f00; width: 50px;">00</div>
+                        <div style="font-size: 12px; color: #ff8f00; opacity: 0.8;">HRS</div>
+                    </div>
+                    <div style="color: #ff8f00; font-size: 24px;">:</div>
+                    <div style="text-align: center;">
+                        <div id="admin-minutes" style="font-family: 'Dela Gothic One', sans-serif; font-size: 32px; color: #ff8f00; width: 50px;">00</div>
+                        <div style="font-size: 12px; color: #ff8f00; opacity: 0.8;">MINS</div>
+                    </div>
+                    <div style="color: #ff8f00; font-size: 24px;">:</div>
+                    <div style="text-align: center;">
+                        <div id="admin-seconds" style="font-family: 'Dela Gothic One', sans-serif; font-size: 32px; color: #ff8f00; width: 50px;">00</div>
+                        <div style="font-size: 12px; color: #ff8f00; opacity: 0.8;">SECS</div>
+                    </div>
+                </div>
+                <div style="margin-top: 12px; font-size: 14px; color: #ff8f00; opacity: 0.7;" id="admin-timer-label">MONTHLY LEADERBOARD</div>
+            </div>
+        </div>
+
+        <!-- Leaderboard Amounts -->
+        <div class="section">
+            <h2>LEADERBOARD AMOUNTS</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Monthly Prize Pool</label>
+                    <input type="text" id="monthly-prize-pool" placeholder="$5,000">
+                </div>
+                <div class="form-group">
+                    <label>Daily Prize Pool</label>
+                    <input type="text" id="daily-prize-pool" placeholder="$100">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Monthly Prizes (comma separated)</label>
+                <input type="text" id="monthly-prizes" placeholder="2500,1000,600,400,200,100,100,100">
+            </div>
+            <div class="form-group">
+                <label>Daily Prizes (comma separated)</label>
+                <input type="text" id="daily-prizes" placeholder="50,25,15,10">
+            </div>
+        </div>
+
+        <!-- Current Leaderboard -->
+        <div class="section">
+            <h2>CURRENT LEADERBOARD</h2>
+            
+            <!-- Monthly Leaderboard -->
+            <div class="form-group" style="margin-bottom: 30px;">
+                <h3 style="font-size: 20px; margin-bottom: 12px; color: #ff8f00;">MONTHLY LEADERBOARD</h3>
+                <label>Paste Monthly API Response JSON</label>
+                <textarea id="api-json-input-monthly" placeholder='Paste the JSON response from the API here, e.g. {"success":true,"data":[...]}' style="min-height: 150px; font-family: monospace; font-size: 12px;"></textarea>
+                <button class="btn" onclick="parseAPIJSON('monthly')" style="margin-top: 12px;">PARSE & UPDATE MONTHLY LEADERBOARD</button>
+                <div id="parse-status-monthly" style="font-size: 12px; color: #ff8f00; margin-top: 12px; display: none;"></div>
+            </div>
+
+            <!-- Daily Leaderboard -->
+            <div class="form-group" style="margin-bottom: 30px;">
+                <h3 style="font-size: 20px; margin-bottom: 12px; color: #ff8f00;">DAILY LEADERBOARD</h3>
+                <label>Paste Daily API Response JSON</label>
+                <textarea id="api-json-input-daily" placeholder='Paste the JSON response from the API here, e.g. {"success":true,"data":[...]}' style="min-height: 150px; font-family: monospace; font-size: 12px;"></textarea>
+                <button class="btn" onclick="parseAPIJSON('daily')" style="margin-top: 12px;">PARSE & UPDATE DAILY LEADERBOARD</button>
+                <div id="parse-status-daily" style="font-size: 12px; color: #ff8f00; margin-top: 12px; display: none;"></div>
+            </div>
+
+            <div class="form-group">
+                <button class="btn" onclick="fetchFromAPI()" style="margin-bottom: 20px;">FETCH FROM DUEL.COM API (Legacy)</button>
+                <div id="api-status" style="font-size: 12px; color: #ff8f00; margin-bottom: 12px; display: none;"></div>
+            </div>
+            <div id="leaderboard-entries"></div>
+            <div class="add-btn" onclick="addLeaderboardEntry()">+ ADD ENTRY</div>
+        </div>
+
+        <!-- Leaderboard History -->
+        <div class="section">
+            <h2>LEADERBOARD HISTORY</h2>
+            <div class="form-group">
+                <label>Monthly History</label>
+                <div id="monthly-history"></div>
+                <div class="add-btn" onclick="addHistoryEntry('monthly')">+ ADD MONTHLY ENTRY</div>
+            </div>
+            <div class="form-group">
+                <label>Daily History</label>
+                <div id="daily-history"></div>
+                <div class="add-btn" onclick="addHistoryEntry('daily')">+ ADD DAILY ENTRY</div>
+            </div>
+        </div>
+
+        <!-- Content Management -->
+        <div class="section">
+            <h2>CONTENT MANAGEMENT</h2>
+            <div class="form-group">
+                <label>Main Page Description (Lorem Ipsum)</label>
+                <textarea id="main-description" placeholder="Enter description text"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Rules Text</label>
+                <textarea id="rules-text" placeholder="Enter rules text"></textarea>
+            </div>
+        </div>
+
+        <!-- Daily Leaderboard Toggle -->
+        <div class="section">
+            <h2>DAILY LEADERBOARD</h2>
+            <div class="form-group">
+                <label>Daily Leaderboard Active</label>
+                <select id="daily-active">
+                    <option value="true">Active</option>
+                    <option value="false">Inactive</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Sign Up Button Link -->
+        <div class="section">
+            <h2>SIGN UP BUTTON</h2>
+            <div class="form-group">
+                <label>Sign Up Button URL</label>
+                <input type="text" id="signup-url" placeholder="https://duel.com">
+            </div>
+        </div>
+
+        <!-- Final Standings -->
+        <div class="section">
+            <h2>FINAL STANDINGS</h2>
+            <div class="form-group">
+                <label>Select Month</label>
+                <select id="final-standings-month" onchange="loadFinalStandings()">
+                    <option value="">Select a month...</option>
+                </select>
+            </div>
+            <div id="final-standings-display" style="margin-top: 20px;"></div>
+        </div>
+
+        <!-- Actions -->
+        <div class="section">
+            <h2>ACTIONS</h2>
+            <div class="form-group">
+                <button class="btn" onclick="saveAll()">SAVE ALL CHANGES</button>
+            </div>
+            <div class="form-group">
+                <button class="btn btn-danger" onclick="startNewLeaderboard()">START NEW LEADERBOARD (30 DAYS)</button>
+            </div>
+            <div class="form-group" style="margin-top: 12px;">
+                <label>Custom End Date (Optional)</label>
+                <input type="datetime-local" id="custom-end-date" style="width: 100%;">
+                <button class="btn" onclick="setCustomEndDate()" style="margin-top: 8px;">SET CUSTOM END DATE</button>
+                <button class="btn" onclick="clearCustomEndDate()" style="margin-top: 8px;">CLEAR CUSTOM DATE (USE MONTH END)</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // IMPORTANT: CHANGE THE PASSWORD BELOW!
+        // ============================================
+        // Admin password - CHANGE THIS BEFORE DEPLOYING!
+        // 
+        // SECURITY WARNING: 
+        // - This password is visible in the source code
+        // - If you push to GitHub, anyone can see it
+        // - For better security, use a strong unique password
+        // - Consider using server-side authentication for production
+        //
+        // To change: Replace 'waxum2025' with your secure password
+        const ADMIN_PASSWORD = 'waxum2025';
+
+        // Check if logged in
+        if (localStorage.getItem('admin_logged_in') === 'true' && checkSession()) {
+            showAdminPanel();
+        }
+
+        async function login() {
+            const password = document.getElementById('password-input').value;
+            const errorDiv = document.getElementById('login-error');
+            errorDiv.style.display = 'none';
+            
+            try {
+                // Try serverless function first (if deployed on Vercel)
+                const response = await fetch('/api/auth', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ password })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        localStorage.setItem('admin_logged_in', 'true');
+                        localStorage.setItem('admin_token', data.token);
+                        localStorage.setItem('admin_token_expires', data.expires);
+                        showAdminPanel();
+                        return;
+                    }
+                }
+            } catch (error) {
+                // Fallback to local password check if API is not available
+                console.log('API not available, using local auth');
+            }
+
+            // Fallback: Local password check (for development)
+            if (password === ADMIN_PASSWORD) {
+                localStorage.setItem('admin_logged_in', 'true');
+                showAdminPanel();
+            } else {
+                errorDiv.style.display = 'block';
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('admin_logged_in');
+            localStorage.removeItem('admin_token');
+            localStorage.removeItem('admin_token_expires');
+            document.getElementById('login-container').style.display = 'block';
+            document.getElementById('admin-panel').classList.remove('active');
+            document.getElementById('password-input').value = '';
+        }
+
+        // Check if session is still valid
+        function checkSession() {
+            const expires = localStorage.getItem('admin_token_expires');
+            if (expires && Date.now() > parseInt(expires)) {
+                logout();
+                return false;
+            }
+            return true;
+        }
+
+        function showAdminPanel() {
+            document.getElementById('login-container').style.display = 'none';
+            document.getElementById('admin-panel').classList.add('active');
+            loadData();
+        }
+
+        function loadData() {
+            // Load status
+            const status = localStorage.getItem('leaderboard_status') || 'active';
+            setStatus(status, false);
+
+            // Load prize pools
+            document.getElementById('monthly-prize-pool').value = localStorage.getItem('monthly_prize_pool') || '$5,000';
+            document.getElementById('daily-prize-pool').value = localStorage.getItem('daily_prize_pool') || '$100';
+
+            // Load prizes
+            document.getElementById('monthly-prizes').value = localStorage.getItem('monthly_prizes') || '2500,1000,600,400,200,100,100,100';
+            document.getElementById('daily-prizes').value = localStorage.getItem('daily_prizes') || '50,25,15,10';
+
+            // Load leaderboard entries
+            loadLeaderboardEntries();
+
+            // Load history
+            loadHistory();
+
+            // Load content
+            document.getElementById('main-description').value = localStorage.getItem('main_description') || 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla ut mauris ut ligula pretium vestibulum. Sed turpis dui, accumsan in posuere quis, volutpat quis eros. Maecenas volutpat ex lorem, nec viverra turpis eleifend vel. Maecenas sed diam at lectus malesuada rutrum. Morbi at arcu dolor.';
+            document.getElementById('rules-text').value = localStorage.getItem('rules_text') || 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.';
+
+            // Load daily active
+            document.getElementById('daily-active').value = localStorage.getItem('daily_active') || 'true';
+
+            // Load signup URL
+            document.getElementById('signup-url').value = localStorage.getItem('signup_url') || 'https://duel.com';
+        }
+
+        function setStatus(status, save = true) {
+            if (save) {
+                localStorage.setItem('leaderboard_status', status);
+                showSuccess();
+            }
+        }
+
+        function loadLeaderboardEntries() {
+            const entries = JSON.parse(localStorage.getItem('leaderboard_entries') || '[]');
+            const container = document.getElementById('leaderboard-entries');
+            container.innerHTML = '';
+
+            if (entries.length === 0) {
+                // Default entries
+                for (let i = 1; i <= 10; i++) {
+                    addLeaderboardEntry(i, `-`, 0);
+                }
+            } else {
+                entries.forEach((entry, index) => {
+                    addLeaderboardEntry(index + 1, entry.name, entry.wagered, entry.id);
+                });
+            }
+        }
+
+        function addLeaderboardEntry(rank = null, name = '', wagered = 0, id = null) {
+            const container = document.getElementById('leaderboard-entries');
+            const entryId = id || Date.now();
+            const entryRank = rank || container.children.length + 1;
+
+            const entry = document.createElement('div');
+            entry.className = 'leaderboard-item';
+            entry.dataset.id = entryId;
+            entry.innerHTML = `
+                <input type="text" class="rank" value="#${entryRank}" readonly>
+                <input type="text" class="name" value="${name}" placeholder="Player name">
+                <input type="text" class="wagered" value="$${wagered.toLocaleString()}" placeholder="Wagered amount">
+                <button class="delete-btn" onclick="deleteLeaderboardEntry('${entryId}')">DELETE</button>
+            `;
+            container.appendChild(entry);
+        }
+
+        function deleteLeaderboardEntry(id) {
+            document.querySelector(`[data-id="${id}"]`).remove();
+        }
+
+        function loadHistory() {
+            const monthly = JSON.parse(localStorage.getItem('monthly_history') || '[]');
+            const daily = JSON.parse(localStorage.getItem('daily_history') || '[]');
+
+            renderHistory('monthly', monthly);
+            renderHistory('daily', daily);
+        }
+
+        function renderHistory(type, entries) {
+            const container = document.getElementById(`${type}-history`);
+            container.innerHTML = '';
+
+            entries.forEach((entry, index) => {
+                const item = document.createElement('div');
+                item.className = 'leaderboard-item';
+                item.dataset.index = index;
+                item.innerHTML = `
+                    <input type="text" class="date" value="${entry.date}" placeholder="Date">
+                    <input type="text" class="prize" value="${entry.prize}" placeholder="Prize">
+                    <button class="delete-btn" onclick="deleteHistoryEntry('${type}', ${index})">DELETE</button>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        function addHistoryEntry(type) {
+            const entries = JSON.parse(localStorage.getItem(`${type}_history`) || '[]');
+            entries.push({ date: '', prize: '' });
+            localStorage.setItem(`${type}_history`, JSON.stringify(entries));
+            loadHistory();
+        }
+
+        function deleteHistoryEntry(type, index) {
+            const entries = JSON.parse(localStorage.getItem(`${type}_history`) || '[]');
+            entries.splice(index, 1);
+            localStorage.setItem(`${type}_history`, JSON.stringify(entries));
+            loadHistory();
+        }
+
+        function saveAll() {
+            // Save prize pools
+            localStorage.setItem('monthly_prize_pool', document.getElementById('monthly-prize-pool').value);
+            localStorage.setItem('daily_prize_pool', document.getElementById('daily-prize-pool').value);
+
+            // Save prizes
+            localStorage.setItem('monthly_prizes', document.getElementById('monthly-prizes').value);
+            localStorage.setItem('daily_prizes', document.getElementById('daily-prizes').value);
+
+            // Save leaderboard entries
+            const entries = [];
+            document.querySelectorAll('.leaderboard-item').forEach(item => {
+                if (item.closest('#leaderboard-entries')) {
+                    const name = item.querySelector('.name').value;
+                    const wagered = item.querySelector('.wagered').value.replace(/[^0-9]/g, '');
+                    if (name && wagered) {
+                        entries.push({
+                            id: item.dataset.id,
+                            name: name,
+                            wagered: parseInt(wagered)
+                        });
+                    }
+                }
+            });
+            localStorage.setItem('leaderboard_entries', JSON.stringify(entries));
+
+            // Save history
+            const monthlyEntries = [];
+            document.querySelectorAll('#monthly-history .leaderboard-item').forEach(item => {
+                monthlyEntries.push({
+                    date: item.querySelector('.date').value,
+                    prize: item.querySelector('.prize').value
+                });
+            });
+            localStorage.setItem('monthly_history', JSON.stringify(monthlyEntries));
+
+            const dailyEntries = [];
+            document.querySelectorAll('#daily-history .leaderboard-item').forEach(item => {
+                dailyEntries.push({
+                    date: item.querySelector('.date').value,
+                    prize: item.querySelector('.prize').value
+                });
+            });
+            localStorage.setItem('daily_history', JSON.stringify(dailyEntries));
+
+            // Save content
+            localStorage.setItem('main_description', document.getElementById('main-description').value);
+            localStorage.setItem('rules_text', document.getElementById('rules-text').value);
+
+            // Save daily active
+            localStorage.setItem('daily_active', document.getElementById('daily-active').value);
+
+            // Save signup URL
+            localStorage.setItem('signup_url', document.getElementById('signup-url').value);
+
+            showSuccess();
+        }
+
+        function startNewLeaderboard() {
+            if (confirm('Are you sure you want to start a new leaderboard? This will clear all current entries and start a 30-day countdown.')) {
+                // Set custom end date (30 days from now)
+                const now = new Date();
+                const endDate = new Date(now.getTime() + (30 * 24 * 60 * 60 * 1000));
+                endDate.setHours(23, 59, 59, 999);
+                
+                // Store custom end date
+                localStorage.setItem('custom_leaderboard_end_date', endDate.toISOString());
+                localStorage.setItem('leaderboard_start_date', now.toISOString());
+                
+                // Clear all leaderboard entries
+                localStorage.removeItem('leaderboard_entries');
+                localStorage.removeItem('leaderboard_entries_monthly');
+                localStorage.removeItem('leaderboard_entries_daily');
+                
+                // Set status to active
+                localStorage.setItem('leaderboard_status', 'active');
+                
+                // Reload entries
+                loadLeaderboardEntries();
+                
+                // Update timer
+                updateAdminTimer();
+                
+                showSuccess();
+                alert('New leaderboard started! 30-day countdown has begun.');
+            }
+        }
+
+        // Censor username - show first 3 letters, hide rest with same length
+        function censorUsername(username) {
+            if (!username || username.length === 0) {
+                return '-';
+            }
+            if (username.length <= 3) {
+                return username.toUpperCase();
+            }
+            const firstThree = username.substring(0, 3).toUpperCase();
+            const remainingLength = username.length - 3;
+            return firstThree + '*'.repeat(remainingLength);
+        }
+
+        // Parse API JSON response manually
+        function parseAPIJSON(type) {
+            const statusDiv = document.getElementById(`parse-status-${type}`);
+            const inputId = `api-json-input-${type}`;
+            statusDiv.style.display = 'block';
+            
+            try {
+                const jsonText = document.getElementById(inputId).value.trim();
+                
+                if (!jsonText) {
+                    throw new Error('Please paste the JSON response');
+                }
+
+                const data = JSON.parse(jsonText);
+                
+                if (!data.success) {
+                    throw new Error('API response indicates failure');
+                }
+
+                if (!data.data || !Array.isArray(data.data)) {
+                    throw new Error('Invalid API response format - missing data array');
+                }
+
+                // Sort by total_wagered_coins descending
+                const sortedData = [...data.data].sort((a, b) => {
+                    const aWagered = parseFloat(a.total_wagered_coins || 0);
+                    const bWagered = parseFloat(b.total_wagered_coins || 0);
+                    return bWagered - aWagered;
+                });
+
+                // Process entries - include ALL users, even with $0 wagered
+                const entries = sortedData.map((user, index) => ({
+                    id: Date.now() + index,
+                    name: censorUsername(user.name || user.username),
+                    wagered: Math.floor(parseFloat(user.total_wagered_coins || 0))
+                }));
+
+                if (entries.length === 0) {
+                    throw new Error('No users found in the response');
+                }
+
+                // Save entries separately for monthly and daily
+                localStorage.setItem(`leaderboard_entries_${type}`, JSON.stringify(entries));
+                
+                // Also update the main leaderboard entries (for backward compatibility)
+                if (type === 'monthly') {
+                    localStorage.setItem('leaderboard_entries', JSON.stringify(entries));
+                    loadLeaderboardEntries();
+                }
+                
+                statusDiv.textContent = `Successfully parsed ${entries.length} entries for ${type.toUpperCase()} leaderboard!`;
+                statusDiv.style.color = '#00ff00';
+                showSuccess();
+                
+                // Clear the textarea
+                document.getElementById(inputId).value = '';
+            } catch (error) {
+                console.error('Parse Error:', error);
+                statusDiv.textContent = `Error: ${error.message}`;
+                statusDiv.style.color = '#ff0000';
+            }
+        }
+
+        // Fetch from Duel.com API
+        async function fetchFromAPI() {
+            const statusDiv = document.getElementById('api-status');
+            statusDiv.style.display = 'block';
+            statusDiv.textContent = 'Fetching from API...';
+            statusDiv.style.color = '#ff8f00';
+
+            try {
+                // NOTE: Due to CORS and authentication requirements, this will likely fail
+                // You need to create a backend proxy server to handle this
+                // See instructions below or create a proxy endpoint
+                
+                const response = await fetch('https://duel.com/api/v2/referrals/referred-users?per_page=100&page=1&sort=total_wagered_coins&order=desc', {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API Error: ${response.status} - ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                
+                if (data.data && Array.isArray(data.data)) {
+                    const entries = data.data.map((user, index) => ({
+                        id: Date.now() + index,
+                        name: censorUsername(user.username || user.name),
+                        wagered: Math.floor(user.total_wagered_coins || 0) // total_wagered_coins is already in dollars
+                    }));
+
+                    // Save entries
+                    localStorage.setItem('leaderboard_entries', JSON.stringify(entries));
+                    
+                    // Reload display
+                    loadLeaderboardEntries();
+                    
+                    statusDiv.textContent = `Successfully fetched ${entries.length} entries from API!`;
+                    statusDiv.style.color = '#00ff00';
+                    showSuccess();
+                } else {
+                    throw new Error('Invalid API response format');
+                }
+            } catch (error) {
+                console.error('API Error:', error);
+                statusDiv.textContent = `API Error: ${error.message}. See console for details. You may need a backend proxy.`;
+                statusDiv.style.color = '#ff0000';
+                
+                // Show instructions
+                alert('API fetch failed due to CORS/authentication. You need to:\n\n' +
+                      '1. Create a backend proxy server (Node.js/Python)\n' +
+                      '2. Or use a serverless function (Vercel/Netlify)\n' +
+                      '3. The proxy should handle authentication and make the API call\n' +
+                      '4. Update the fetch URL to point to your proxy endpoint\n\n' +
+                      'For now, you can manually add entries using the form below.');
+            }
+        }
+
+        function showSuccess() {
+            const msg = document.getElementById('success-message');
+            msg.classList.add('show');
+            setTimeout(() => {
+                msg.classList.remove('show');
+            }, 3000);
+        }
+
+        // Allow Enter key to login
+        document.getElementById('password-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                login();
+            }
+        });
+
+        // Countdown timer functions
+        function getEndOfMonth() {
+            // Check for custom end date first
+            const customDate = localStorage.getItem('custom_leaderboard_end_date');
+            if (customDate) {
+                return new Date(customDate);
+            }
+            const now = new Date();
+            return new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+        }
+
+        function getEndOfDay() {
+            const now = new Date();
+            return new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+        }
+
+        let adminTimerType = 'monthly'; // Track which timer to show
+        let adminTimerInterval = null;
+
+        function setAdminTimerType(type) {
+            adminTimerType = type;
+            const monthlyBtn = document.getElementById('admin-timer-monthly-btn');
+            const dailyBtn = document.getElementById('admin-timer-daily-btn');
+            
+            if (type === 'monthly') {
+                monthlyBtn.style.opacity = '1';
+                dailyBtn.style.opacity = '0.5';
+            } else {
+                monthlyBtn.style.opacity = '0.5';
+                dailyBtn.style.opacity = '1';
+            }
+            
+            updateAdminTimer();
+        }
+
+        function updateAdminTimer() {
+            const dailyActive = localStorage.getItem('daily_active') !== 'false';
+            
+            // Don't update timer if daily is inactive
+            if (adminTimerType === 'daily' && !dailyActive) {
+                document.getElementById('admin-days').textContent = '--';
+                document.getElementById('admin-hours').textContent = '--';
+                document.getElementById('admin-minutes').textContent = '--';
+                document.getElementById('admin-seconds').textContent = '--';
+                const label = document.getElementById('admin-timer-label');
+                label.textContent = 'DAILY LEADERBOARD (INACTIVE)';
+                return;
+            }
+            
+            const endDate = adminTimerType === 'monthly' ? getEndOfMonth() : getEndOfDay();
+            const now = new Date();
+            const diff = endDate - now;
+
+            const label = document.getElementById('admin-timer-label');
+            label.textContent = adminTimerType.toUpperCase() + ' LEADERBOARD';
+
+            if (diff <= 0) {
+                document.getElementById('admin-days').textContent = '00';
+                document.getElementById('admin-hours').textContent = '00';
+                document.getElementById('admin-minutes').textContent = '00';
+                document.getElementById('admin-seconds').textContent = '00';
+                
+                // Capture final standings when countdown ends
+                captureFinalStandings();
+                return;
+            }
+
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+            document.getElementById('admin-days').textContent = String(days).padStart(2, '0');
+            document.getElementById('admin-hours').textContent = String(hours).padStart(2, '0');
+            document.getElementById('admin-minutes').textContent = String(minutes).padStart(2, '0');
+            document.getElementById('admin-seconds').textContent = String(seconds).padStart(2, '0');
+        }
+
+        // Capture final standings when countdown ends
+        function captureFinalStandings() {
+            const now = new Date();
+            const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+            const monthName = now.toLocaleString('default', { month: 'long', year: 'numeric' }).toUpperCase();
+            
+            // Get current leaderboard entries
+            const entries = JSON.parse(localStorage.getItem(`leaderboard_entries_${adminTimerType}`) || localStorage.getItem('leaderboard_entries') || '[]');
+            
+            if (entries.length > 0) {
+                // Store final standings
+                const finalStandings = {
+                    month: monthName,
+                    monthKey: monthKey,
+                    type: adminTimerType,
+                    capturedAt: new Date().toISOString(),
+                    entries: entries.map((entry, index) => ({
+                        rank: index + 1,
+                        name: entry.name,
+                        wagered: entry.wagered
+                    }))
+                };
+
+                // Get existing final standings
+                const allStandings = JSON.parse(localStorage.getItem('final_standings') || '[]');
+                
+                // Check if this month already exists
+                const existingIndex = allStandings.findIndex(s => s.monthKey === monthKey && s.type === adminTimerType);
+                if (existingIndex >= 0) {
+                    allStandings[existingIndex] = finalStandings;
+                } else {
+                    allStandings.push(finalStandings);
+                }
+
+                localStorage.setItem('final_standings', JSON.stringify(allStandings));
+                
+                // Update dropdown
+                updateFinalStandingsDropdown();
+                
+                // Show success message
+                showSuccess();
+                alert(`Final standings captured for ${monthName} ${adminTimerType} leaderboard!`);
+            }
+        }
+
+        // Update final standings dropdown
+        function updateFinalStandingsDropdown() {
+            const allStandings = JSON.parse(localStorage.getItem('final_standings') || '[]');
+            const select = document.getElementById('final-standings-month');
+            
+            // Clear existing options except first
+            select.innerHTML = '<option value="">Select a month...</option>';
+            
+            // Sort by date (newest first)
+            const sorted = allStandings.sort((a, b) => {
+                return new Date(b.capturedAt) - new Date(a.capturedAt);
+            });
+            
+            sorted.forEach((standing, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = `${standing.month} (${standing.type.toUpperCase()})`;
+                select.appendChild(option);
+            });
+        }
+
+        // Load final standings for selected month
+        function loadFinalStandings() {
+            const select = document.getElementById('final-standings-month');
+            const index = parseInt(select.value);
+            const display = document.getElementById('final-standings-display');
+            
+            if (isNaN(index)) {
+                display.innerHTML = '';
+                return;
+            }
+
+            const allStandings = JSON.parse(localStorage.getItem('final_standings') || '[]');
+            const sorted = allStandings.sort((a, b) => {
+                return new Date(b.capturedAt) - new Date(a.capturedAt);
+            });
+            
+            const standing = sorted[index];
+            
+            if (!standing) {
+                display.innerHTML = '<p style="color: #ff8f00;">No standings found.</p>';
+                return;
+            }
+
+            let html = `<h3 style="font-size: 18px; margin-bottom: 16px; color: #ff8f00;">${standing.month} - ${standing.type.toUpperCase()}</h3>`;
+            html += `<p style="font-size: 12px; color: #ff8f00; opacity: 0.7; margin-bottom: 16px;">Captured: ${new Date(standing.capturedAt).toLocaleString()}</p>`;
+            html += '<div style="border: 1px solid #ff8f00; padding: 12px; margin-bottom: 8px; background: rgba(255, 143, 0, 0.05);"><div style="display: grid; grid-template-columns: 60px 1fr 150px; gap: 12px; font-weight: 600; margin-bottom: 8px; color: #ff8f00;"><div>RANK</div><div>PLAYER</div><div>WAGERED</div></div>';
+            
+            standing.entries.forEach(entry => {
+                html += `<div style="display: grid; grid-template-columns: 60px 1fr 150px; gap: 12px; padding: 8px 0; border-top: 1px solid rgba(255, 143, 0, 0.2);"><div>#${entry.rank}</div><div>${entry.name}</div><div>$${entry.wagered.toLocaleString()}</div></div>`;
+            });
+            
+            html += '</div>';
+            display.innerHTML = html;
+        }
+
+        // Set custom end date
+        function setCustomEndDate() {
+            const dateInput = document.getElementById('custom-end-date').value;
+            if (!dateInput) {
+                alert('Please select a date and time');
+                return;
+            }
+            
+            const endDate = new Date(dateInput);
+            localStorage.setItem('custom_leaderboard_end_date', endDate.toISOString());
+            updateAdminTimer();
+            showSuccess();
+        }
+
+        // Clear custom end date
+        function clearCustomEndDate() {
+            localStorage.removeItem('custom_leaderboard_end_date');
+            localStorage.removeItem('leaderboard_start_date');
+            updateAdminTimer();
+            showSuccess();
+        }
+
+        // Load custom end date into input if it exists
+        function loadCustomEndDate() {
+            const customDate = localStorage.getItem('custom_leaderboard_end_date');
+            if (customDate) {
+                const date = new Date(customDate);
+                // Format for datetime-local input (YYYY-MM-DDTHH:mm)
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                const hours = String(date.getHours()).padStart(2, '0');
+                const minutes = String(date.getMinutes()).padStart(2, '0');
+                document.getElementById('custom-end-date').value = `${year}-${month}-${day}T${hours}:${minutes}`;
+            }
+        }
+
+        // Initialize admin timer when panel is shown
+        const originalShowAdminPanel = showAdminPanel;
+        showAdminPanel = function() {
+            originalShowAdminPanel();
+            loadCustomEndDate();
+            updateAdminTimer();
+            if (adminTimerInterval) {
+                clearInterval(adminTimerInterval);
+            }
+            adminTimerInterval = setInterval(updateAdminTimer, 1000);
+            updateFinalStandingsDropdown();
+        };
+    </script>
+</body>
+</html>
