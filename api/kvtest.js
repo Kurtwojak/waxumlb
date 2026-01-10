@@ -19,16 +19,36 @@ async function getRedisClient() {
   if (process.env.REDIS_URL && !redisClient) {
     try {
       const { createClient } = await import('redis');
-      redisClient = createClient({
-        url: process.env.REDIS_URL,
-        password: process.env.REDIS_PASSWORD,
-      });
+      
+      // If password is already in URL (redis://default:password@host:port), just use the URL
+      // If REDIS_PASSWORD is provided separately, construct config with both
+      const redisUrl = process.env.REDIS_URL;
+      const hasPasswordInUrl = redisUrl.includes('@') && redisUrl.includes(':');
+      
+      let config;
+      if (hasPasswordInUrl) {
+        // Password is in URL, just use the URL directly
+        config = { url: redisUrl };
+      } else if (process.env.REDIS_PASSWORD) {
+        // Password provided separately
+        config = {
+          url: redisUrl,
+          password: process.env.REDIS_PASSWORD,
+        };
+      } else {
+        // Just URL, no password
+        config = { url: redisUrl };
+      }
+      
+      redisClient = createClient(config);
       redisClient.on('error', (err) => console.error('Redis Client Error', err));
       await redisClient.connect();
       console.log('✅ Connected to Redis via direct connection');
       return { type: 'direct', client: redisClient };
     } catch (err) {
-      console.warn('Direct Redis connection failed, falling back to REST API:', err.message);
+      console.error('Direct Redis connection failed:', err.message);
+      console.error('Error details:', err);
+      console.warn('Falling back to REST API if available...');
       // Fall through to REST API
     }
   }
