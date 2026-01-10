@@ -467,6 +467,47 @@
         // To change: Replace 'waxum2025' with your secure password
         const ADMIN_PASSWORD = 'waxum2025';
 
+        // Brute force protection
+        const MAX_LOGIN_ATTEMPTS = 5;
+        const LOCKOUT_TIME = 15 * 60 * 1000; // 15 minutes
+        let loginAttempts = parseInt(localStorage.getItem('login_attempts') || '0');
+        let lockoutUntil = parseInt(localStorage.getItem('lockout_until') || '0');
+
+        // Check if account is locked
+        function isLockedOut() {
+            if (lockoutUntil > Date.now()) {
+                const minutesLeft = Math.ceil((lockoutUntil - Date.now()) / 60000);
+                return minutesLeft;
+            }
+            // Reset if lockout expired
+            if (lockoutUntil > 0) {
+                localStorage.removeItem('login_attempts');
+                localStorage.removeItem('lockout_until');
+                loginAttempts = 0;
+                lockoutUntil = 0;
+            }
+            return false;
+        }
+
+        // Record failed login attempt
+        function recordFailedAttempt() {
+            loginAttempts++;
+            localStorage.setItem('login_attempts', loginAttempts.toString());
+            
+            if (loginAttempts >= MAX_LOGIN_ATTEMPTS) {
+                lockoutUntil = Date.now() + LOCKOUT_TIME;
+                localStorage.setItem('lockout_until', lockoutUntil.toString());
+            }
+        }
+
+        // Reset login attempts on successful login
+        function resetLoginAttempts() {
+            loginAttempts = 0;
+            lockoutUntil = 0;
+            localStorage.removeItem('login_attempts');
+            localStorage.removeItem('lockout_until');
+        }
+
         // Check if logged in
         if (localStorage.getItem('admin_logged_in') === 'true' && checkSession()) {
             showAdminPanel();
@@ -475,7 +516,23 @@
         async function login() {
             const password = document.getElementById('password-input').value;
             const errorDiv = document.getElementById('login-error');
+            const passwordInput = document.getElementById('password-input');
             errorDiv.style.display = 'none';
+            
+            // Check if locked out
+            const lockoutMinutes = isLockedOut();
+            if (lockoutMinutes) {
+                errorDiv.textContent = `Too many failed attempts. Account locked for ${lockoutMinutes} more minute(s).`;
+                errorDiv.style.display = 'block';
+                passwordInput.disabled = true;
+                setTimeout(() => {
+                    passwordInput.disabled = false;
+                }, 60000); // Re-enable after 1 minute
+                return;
+            }
+
+            // Check password
+            let authenticated = false;
             
             try {
                 // Try serverless function first (if deployed on Vercel)
@@ -490,11 +547,7 @@
                 if (response.ok) {
                     const data = await response.json();
                     if (data.success) {
-                        localStorage.setItem('admin_logged_in', 'true');
-                        localStorage.setItem('admin_token', data.token);
-                        localStorage.setItem('admin_token_expires', data.expires);
-                        showAdminPanel();
-                        return;
+                        authenticated = true;
                     }
                 }
             } catch (error) {
@@ -503,11 +556,26 @@
             }
 
             // Fallback: Local password check (for development)
-            if (password === ADMIN_PASSWORD) {
+            if (!authenticated && password === ADMIN_PASSWORD) {
+                authenticated = true;
+            }
+
+            if (authenticated) {
+                resetLoginAttempts();
                 localStorage.setItem('admin_logged_in', 'true');
+                localStorage.setItem('admin_login_time', Date.now().toString());
                 showAdminPanel();
             } else {
+                recordFailedAttempt();
+                errorDiv.textContent = 'Invalid password. ' + (MAX_LOGIN_ATTEMPTS - loginAttempts) + ' attempts remaining.';
                 errorDiv.style.display = 'block';
+                passwordInput.value = '';
+                
+                // Check if now locked out
+                const newLockoutMinutes = isLockedOut();
+                if (newLockoutMinutes) {
+                    errorDiv.textContent = `Too many failed attempts. Account locked for ${newLockoutMinutes} minutes.`;
+                }
             }
         }
 
@@ -522,11 +590,22 @@
 
         // Check if session is still valid
         function checkSession() {
+            // Check session timeout (24 hours)
+            const loginTime = parseInt(localStorage.getItem('admin_login_time') || '0');
+            const SESSION_TIMEOUT = 24 * 60 * 60 * 1000; // 24 hours
+            
+            if (loginTime && Date.now() - loginTime > SESSION_TIMEOUT) {
+                logout();
+                return false;
+            }
+            
+            // Check token expiration if using API auth
             const expires = localStorage.getItem('admin_token_expires');
             if (expires && Date.now() > parseInt(expires)) {
                 logout();
                 return false;
             }
+            
             return true;
         }
 
