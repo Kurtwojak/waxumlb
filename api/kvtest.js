@@ -1,48 +1,66 @@
-import { kv } from '@vercel/kv';
+import { createClient } from 'redis';
+
+// Initialize Redis client - connect once per serverless function instance
+let redis = null;
+
+async function getRedisClient() {
+  if (redis) return redis;
+  
+  redis = createClient({
+    url: process.env.REDIS_URL || process.env.KV_REST_API_URL,
+    password: process.env.REDIS_PASSWORD || process.env.KV_REST_API_TOKEN,
+  });
+  
+  redis.on('error', (err) => console.error('Redis Client Error', err));
+  
+  await redis.connect();
+  return redis;
+}
 
 export default async function handler(req, res) {
   try {
-    // Check if KV is properly configured
-    if (!process.env.KV_REST_API_URL || !process.env.KV_REST_API_TOKEN) {
-      return res.status(500).json({ 
-        error: 'KV not configured',
-        message: 'Missing required environment variables KV_REST_API_URL and KV_REST_API_TOKEN. Please create a KV database in your Vercel project dashboard and link it to this project.',
-        help: 'See VERCEL_KV_SETUP.md for instructions'
-      });
-    }
-
     if (req.method === 'GET') {
-      // Fetch data from KV
-      const result = await kv.get('item');
+      // Get Redis client
+      const client = await getRedisClient();
+      
+      // Fetch data from Redis
+      const result = await client.get('item');
       
       // Return the result in the response
       return res.status(200).json({ result });
     }
 
     if (req.method === 'POST') {
-      // Store data in KV
+      // Get Redis client
+      const client = await getRedisClient();
+      
+      // Store data in Redis
       const { key, value } = req.body;
       if (!key || value === undefined) {
         return res.status(400).json({ error: 'key and value are required' });
       }
       
-      await kv.set(key, value);
+      await client.set(key, value);
       return res.status(200).json({ success: true, message: `Stored ${key}` });
     }
 
     return res.status(405).json({ error: 'Method not allowed. Use GET or POST' });
   } catch (err) {
-    console.error('KV Error:', err);
+    console.error('Redis Error:', err);
     
-    // Provide helpful error message for missing env vars
-    if (err.message && err.message.includes('Missing required environment variables')) {
-      return res.status(500).json({ 
-        error: 'KV Configuration Error',
-        message: err.message,
-        help: 'Create a KV database in your Vercel dashboard (Storage tab) and link it to your project. See VERCEL_KV_SETUP.md for detailed instructions.'
-      });
+    // Reset connection on error
+    if (redis) {
+      try {
+        await redis.quit();
+      } catch (e) {
+        // Ignore quit errors
+      }
+      redis = null;
     }
     
-    return res.status(500).json({ error: err.message });
+    return res.status(500).json({ 
+      error: err.message,
+      help: 'Make sure REDIS_URL and REDIS_PASSWORD (or KV_REST_API_URL and KV_REST_API_TOKEN) are set in your environment variables.'
+    });
   }
 }

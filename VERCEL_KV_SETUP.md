@@ -1,6 +1,6 @@
-# Vercel KV Setup Guide
+# Redis Setup Guide (Using Vercel KV/Redis)
 
-Follow these steps to set up Vercel KV for local development:
+Follow these steps to set up Redis for local development:
 
 ## 1. Connect to a project
 
@@ -23,27 +23,28 @@ vercel env pull .env.development.local
 
 This creates a `.env.development.local` file with your KV connection credentials.
 
-## 3. Install @vercel/kv
+## 3. Install redis
 
-Already installed! The `@vercel/kv` package is in `package.json`.
+Already installed! The `redis` package is in `package.json`.
 
 If you need to reinstall:
 ```bash
-npm install @vercel/kv
+npm install redis
 ```
 
 ## 4. Import and Initialize the SDK
 
-The `api/kvtest.js` file is already set up with the proper imports and initialization.
+The `api/kvtest.js` file is already set up with the proper imports and initialization using the `redis` package.
 
-**Note:** `@vercel/kv` automatically uses environment variables when deployed on Vercel. For local development, you need the `.env.development.local` file from step 2.
+**Note:** The Redis client will use environment variables when deployed on Vercel. For local development, you need the `.env.development.local` file from step 2.
 
 ## Environment Variables Needed
 
 After pulling env vars, you should have:
-- `KV_REST_API_URL`
-- `KV_REST_API_TOKEN`
-- `KV_REST_API_READ_ONLY_TOKEN`
+- `KV_REST_API_URL` (or `REDIS_URL`)
+- `KV_REST_API_TOKEN` (or `REDIS_PASSWORD`)
+
+The code automatically checks both naming conventions (`KV_REST_API_URL`/`REDIS_URL` and `KV_REST_API_TOKEN`/`REDIS_PASSWORD`) for compatibility.
 
 These are automatically provided by Vercel when you create a KV database in your project dashboard.
 

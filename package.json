@@ -9,7 +9,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@vercel/kv": "^0.2.1"
+    "redis": "^4.6.0"
   },
   "devDependencies": {}
 }
