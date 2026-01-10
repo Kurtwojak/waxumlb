@@ -57,8 +57,8 @@
     
     <div class="container">
         <h2>POST - Store a Value</h2>
-        <input type="text" id="keyInput" placeholder="Key (e.g., test-key)" value="test-key-<?php echo time(); ?>">
-        <input type="text" id="valueInput" placeholder="Value (e.g., hello world)" value="Hello from test at <?php echo date('H:i:s'); ?>">
+        <input type="text" id="keyInput" placeholder="Key (e.g., test-key)" value="">
+        <input type="text" id="valueInput" placeholder="Value (e.g., hello world)" value="">
         <br><br>
         <button onclick="storeValue()">POST - Store Value</button>
         <pre id="postResult">Click "POST - Store Value" to test...</pre>
@@ -185,8 +185,11 @@
             }
         }
 
-        // Auto-generate random key on load
-        document.getElementById('keyInput').value = 'test-key-' + Date.now();
+        // Auto-generate random key and value on load
+        window.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('keyInput').value = 'test-key-' + Date.now();
+            document.getElementById('valueInput').value = 'Hello from test at ' + new Date().toLocaleTimeString();
+        });
     </script>
 </body>
 </html>
