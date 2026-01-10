@@ -77,23 +77,70 @@ export default async function handler(req, res) {
         // Direct Redis connection
         await connection.client.set(key, String(value));
       } else {
-        // REST API - note: Vercel KV REST API format may vary
-        const response = await fetch(`${connection.url}/set/${key}`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${connection.token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ value: String(value) }),
-        });
+        // REST API - Vercel KV REST API format
+        // Try different possible endpoint formats
+        let response;
+        try {
+          // Format 1: Standard REST API
+          response = await fetch(`${connection.url}/set/${key}`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${connection.token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ value: String(value) }),
+          });
+          
+          if (!response.ok && response.status === 404) {
+            // Try alternative format
+            response = await fetch(`${connection.url}`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${connection.token}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ 
+                command: 'SET',
+                args: [key, String(value)]
+              }),
+            });
+          }
+        } catch (fetchError) {
+          throw new Error(`Failed to connect to Redis REST API: ${fetchError.message}`);
+        }
 
         if (!response.ok) {
           const errorText = await response.text();
-          throw new Error(`Redis API error: ${response.status} - ${errorText}`);
+          throw new Error(`Redis API error: ${response.status} - ${errorText}. URL: ${connection.url}/set/${key}`);
+        }
+        
+        // Verify the response
+        const responseData = await response.json().catch(() => ({}));
+        console.log('Redis SET response:', responseData);
+      }
+
+      // Verify it was stored by getting it back
+      let storedValue;
+      if (connection.type === 'direct') {
+        storedValue = await connection.client.get(key);
+      } else {
+        const getResponse = await fetch(`${connection.url}/get/${key}`, {
+          headers: {
+            'Authorization': `Bearer ${connection.token}`,
+          },
+        });
+        if (getResponse.ok) {
+          const getData = await getResponse.json();
+          storedValue = getData.result;
         }
       }
 
-      return res.status(200).json({ success: true, message: `Stored ${key}` });
+      return res.status(200).json({ 
+        success: true, 
+        message: `Stored "${key}" = "${value}"`,
+        verified: storedValue !== null,
+        stored_value: storedValue
+      });
     }
 
     return res.status(405).json({ error: 'Method not allowed. Use GET or POST' });
