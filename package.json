@@ -8,6 +8,8 @@
   "keywords": ["leaderboard", "waxum", "duel"],
   "author": "",
   "license": "MIT",
-  "dependencies": {},
+  "dependencies": {
+    "@vercel/kv": "^0.2.1"
+  },
   "devDependencies": {}
 }
