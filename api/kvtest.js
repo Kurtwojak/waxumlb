@@ -60,7 +60,11 @@ export default async function handler(req, res) {
         result = data.result;
       }
 
-      return res.status(200).json({ result });
+      // Return result with helpful message if null
+      return res.status(200).json({ 
+        result,
+        message: result === null ? `Key "${key}" does not exist. Use POST to store a value first.` : `Found value for key "${key}"`
+      });
     }
 
     if (req.method === 'POST') {
