@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KV Test</title>
+    <style>
+        body {
+            font-family: monospace;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .container {
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        button {
+            background: #ff6b35;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #ff8c5a;
+        }
+        input {
+            padding: 8px;
+            margin: 5px;
+            border: 1px solid #555;
+            border-radius: 4px;
+            background: #333;
+            color: #fff;
+            width: 200px;
+        }
+        pre {
+            background: #1a1a1a;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            border: 1px solid #444;
+        }
+        .success { color: #4ade80; }
+        .error { color: #f87171; }
+    </style>
+</head>
+<body>
+    <h1>🔧 KV Storage Test</h1>
+    
+    <div class="container">
+        <h2>POST - Store a Value</h2>
+        <input type="text" id="keyInput" placeholder="Key (e.g., test-key)" value="test-key-<?php echo time(); ?>">
+        <input type="text" id="valueInput" placeholder="Value (e.g., hello world)" value="Hello from test at <?php echo date('H:i:s'); ?>">
+        <br><br>
+        <button onclick="storeValue()">POST - Store Value</button>
+        <pre id="postResult">Click "POST - Store Value" to test...</pre>
+    </div>
+
+    <div class="container">
+        <h2>GET - Retrieve a Value</h2>
+        <input type="text" id="getKeyInput" placeholder="Key to retrieve" value="test-key">
+        <br><br>
+        <button onclick="getValue()">GET - Retrieve Value</button>
+        <button onclick="getRandomKey()">GET - Random Key</button>
+        <pre id="getResult">Click "GET - Retrieve Value" to test...</pre>
+    </div>
+
+    <div class="container">
+        <h2>Full Test (POST then GET)</h2>
+        <button onclick="fullTest()">🔄 Run Full Test (POST → GET)</button>
+        <pre id="fullTestResult">Click "Run Full Test" to test both endpoints...</pre>
+    </div>
+
+    <script>
+        // Update this URL to match your Vercel deployment or local server
+        const API_URL = window.location.origin.includes('localhost') 
+            ? 'http://localhost:3000/api/kvtest'
+            : '/api/kvtest';
+
+        async function storeValue() {
+            const key = document.getElementById('keyInput').value || 'test-key';
+            const value = document.getElementById('valueInput').value || 'test-value';
+            const resultEl = document.getElementById('postResult');
+            
+            resultEl.textContent = 'Storing...';
+            resultEl.className = '';
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ key, value }),
+                });
+
+                const data = await response.json();
+                resultEl.className = response.ok ? 'success' : 'error';
+                resultEl.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                resultEl.className = 'error';
+                resultEl.textContent = `Error: ${error.message}`;
+            }
+        }
+
+        async function getValue() {
+            const key = document.getElementById('getKeyInput').value || 'test-key';
+            const resultEl = document.getElementById('getResult');
+            
+            resultEl.textContent = 'Fetching...';
+            resultEl.className = '';
+
+            try {
+                const response = await fetch(`${API_URL}?key=${encodeURIComponent(key)}`, {
+                    method: 'GET',
+                });
+
+                const data = await response.json();
+                resultEl.className = response.ok ? 'success' : 'error';
+                resultEl.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                resultEl.className = 'error';
+                resultEl.textContent = `Error: ${error.message}`;
+            }
+        }
+
+        async function getRandomKey() {
+            const randomKey = 'random-' + Math.random().toString(36).substring(7);
+            document.getElementById('getKeyInput').value = randomKey;
+            await getValue();
+        }
+
+        async function fullTest() {
+            const resultEl = document.getElementById('fullTestResult');
+            const randomKey = 'test-' + Date.now();
+            const testValue = 'Test value ' + new Date().toISOString();
+
+            resultEl.textContent = 'Running full test...\n';
+            resultEl.className = '';
+
+            try {
+                // Step 1: POST
+                resultEl.textContent += `\n[1/2] POST: Storing key="${randomKey}", value="${testValue}"\n`;
+                const postResponse = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ key: randomKey, value: testValue }),
+                });
+                const postData = await postResponse.json();
+                resultEl.textContent += `POST Response: ${JSON.stringify(postData, null, 2)}\n\n`;
+
+                if (!postResponse.ok) {
+                    throw new Error(`POST failed: ${postData.error || 'Unknown error'}`);
+                }
+
+                // Step 2: GET
+                resultEl.textContent += `[2/2] GET: Retrieving key="${randomKey}"\n`;
+                const getResponse = await fetch(`${API_URL}?key=${encodeURIComponent(randomKey)}`, {
+                    method: 'GET',
+                });
+                const getData = await getResponse.json();
+                resultEl.textContent += `GET Response: ${JSON.stringify(getData, null, 2)}\n\n`;
+
+                // Verify
+                if (getData.result === testValue) {
+                    resultEl.className = 'success';
+                    resultEl.textContent += '✅ SUCCESS: Value stored and retrieved correctly!';
+                } else {
+                    resultEl.className = 'error';
+                    resultEl.textContent += `❌ FAIL: Value mismatch!\nExpected: "${testValue}"\nGot: "${getData.result}"`;
+                }
+            } catch (error) {
+                resultEl.className = 'error';
+                resultEl.textContent += `\n❌ ERROR: ${error.message}`;
+            }
+        }
+
+        // Auto-generate random key on load
+        document.getElementById('keyInput').value = 'test-key-' + Date.now();
+    </script>
+</body>
+</html>
