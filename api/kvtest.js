@@ -5,6 +5,16 @@
 let redisClient = null;
 
 async function getRedisClient() {
+  // Debug: Log available env vars (without exposing values)
+  const envVars = {
+    hasRedisUrl: !!process.env.REDIS_URL,
+    hasRedisPassword: !!process.env.REDIS_PASSWORD,
+    hasKvRestApiUrl: !!process.env.KV_REST_API_URL,
+    hasKvRestApiToken: !!process.env.KV_REST_API_TOKEN,
+    hasKvReadOnlyToken: !!process.env.KV_REST_API_READ_ONLY_TOKEN,
+  };
+  console.log('Redis connection env vars:', envVars);
+
   // Try direct Redis connection first (if REDIS_URL is provided)
   if (process.env.REDIS_URL && !redisClient) {
     try {
@@ -15,6 +25,7 @@ async function getRedisClient() {
       });
       redisClient.on('error', (err) => console.error('Redis Client Error', err));
       await redisClient.connect();
+      console.log('✅ Connected to Redis via direct connection');
       return { type: 'direct', client: redisClient };
     } catch (err) {
       console.warn('Direct Redis connection failed, falling back to REST API:', err.message);
@@ -22,14 +33,19 @@ async function getRedisClient() {
     }
   }
 
-  // Use REST API
+  // Use REST API (Vercel KV)
   const apiUrl = process.env.KV_REST_API_URL;
   const apiToken = process.env.KV_REST_API_TOKEN || process.env.KV_REST_API_READ_ONLY_TOKEN;
   
   if (!apiUrl || !apiToken) {
-    throw new Error('No Redis connection available. Set either REDIS_URL or KV_REST_API_URL with KV_REST_API_TOKEN.');
+    const missing = [];
+    if (!apiUrl) missing.push('KV_REST_API_URL');
+    if (!apiToken) missing.push('KV_REST_API_TOKEN (or KV_REST_API_READ_ONLY_TOKEN)');
+    
+    throw new Error(`No Redis connection available. Missing: ${missing.join(', ')}. Please create a KV database in your Vercel project dashboard and link it to your project.`);
   }
 
+  console.log('✅ Using Vercel KV REST API');
   return { type: 'rest', url: apiUrl, token: apiToken };
 }
 
